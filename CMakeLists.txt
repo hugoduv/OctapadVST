@@ -91,24 +91,22 @@ endif()
 juce_add_plugin(
   AudioPlugin
   COMPANY_NAME
-  "MyCompany" # change this
+  "hduv" # change this
   IS_SYNTH
   FALSE # may change this
   NEEDS_MIDI_INPUT
-  FALSE # may change this
+  TRUE # may change this
   NEEDS_MIDI_OUTPUT
   FALSE # may change this
   PLUGIN_MANUFACTURER_CODE
-  Mcmp # change this (for max compatibility, first letter must be uppercase, remaining lowercase)
+  Hduv # change this (for max compatibility, first letter must be uppercase, remaining lowercase)
   PLUGIN_CODE
-  Expl # change this (for max compatibility, first letter must be uppercase, remaining lowercase)
+  Octa # change this (for max compatibility, first letter must be uppercase, remaining lowercase)
   FORMATS
-  AAX
-  AU
   Standalone
   VST3
   PRODUCT_NAME
-  "YourPluginName" # change this
+  "Octapad" # change this
   VERSION
   0.0.0 # 0.0.0 forces AU host to always rescan the plugin. Change this before releasing
   COPY_PLUGIN_AFTER_BUILD
@@ -156,6 +154,16 @@ target_link_libraries(
 
 # This command allows running tests from the "build" folder (the one where CMake generates the project to).
 enable_testing()
+
+# Target the host at C:\Users\hugdu\Dev\OctapadVST\libs\juce\extras\AudioPluginHost\Builds\VisualStudio2022\x64\Release\App
+add_custom_target(PLUGIN_HOST
+  DEPENDS AudioPlugin_VST3
+  COMMAND ${CMAKE_COMMAND} -E env
+    "JUCE_PLUGINHOST_PATH=${CMAKE_CURRENT_SOURCE_DIR}/libs/juce/extras/AudioPluginHost/Builds/VisualStudio2022/x64/Release/App"
+    "${CMAKE_CURRENT_SOURCE_DIR}/libs/juce/extras/AudioPluginHost/Builds/VisualStudio2022/x64/Release/App/AudioPluginHost.exe"
+    --no-sandbox
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 # Adds all the targets configured in the "test" folder.
 add_subdirectory(test)
