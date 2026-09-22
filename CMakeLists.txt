@@ -113,6 +113,14 @@ juce_add_plugin(
   FALSE # Changing this to TRUE will enable automatic copying of the built plugin formats
         # to correct directories on your system. The directories must exist, though
 )
+ 
+ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+   add_custom_target(RUN_STANDALONE
+     DEPENDS AudioPlugin_Standalone
+     COMMAND cmd /c start "" "$<TARGET_FILE:AudioPlugin_Standalone>"
+     WORKING_DIRECTORY "$<TARGET_FILE_DIR:AudioPlugin_Standalone>"
+   )
+ endif()
 
 # These definitions are recommended by JUCE
 target_compile_definitions(AudioPlugin PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0)
