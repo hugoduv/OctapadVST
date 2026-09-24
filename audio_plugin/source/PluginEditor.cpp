@@ -9,15 +9,20 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   // Here we will add text to the pads later
   pad1Group.setText("Pad 1");
   pad1Group.setTextLabelPosition(juce::Justification::centred);
-  pad1LoadButton.setButtonText("Load");
+  pad1LoadButton.setButtonText("Load"); 
   pad1ClearButton.setButtonText("Clear");
   pad1PlayButton.setButtonText("Play");
+  pad1Text.setText("audio.wav", juce::dontSendNotification);
+  pad1Text.setJustificationType(juce::Justification::centred);
+
   pad1Group.addChildComponent(pad1LoadButton);
   pad1Group.addChildComponent(pad1ClearButton);
   pad1Group.addChildComponent(pad1PlayButton);
+  pad1Group.addChildComponent(pad1Text);
   addAndMakeVisible(pad1LoadButton);
   addAndMakeVisible(pad1ClearButton);
   addAndMakeVisible(pad1PlayButton);
+  addAndMakeVisible(pad1Text);
   addAndMakeVisible(pad1Group);
 
   pad2Group.setText("Pad 2");
@@ -49,6 +54,13 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   addAndMakeVisible(pad8Group);
 
   addAndMakeVisible(pluginNameGroup);
+
+
+  pad1LoadButton.onClick = [this]
+  {
+    DBG("Load button clicked for Pad 1");
+  };
+
   setSize(540*2, 270*2); // dimensions of the Roland Octapad hardware
 }
 
@@ -73,29 +85,47 @@ void PluginEditor::resized() {
 
   auto bounds = getLocalBounds(); 
   int gap = 10;
-  int octoPadWidth = bounds.getWidth()* 3/4 - gap*2;
-  int octoPadHeight = bounds.getHeight() - 2*gap;
 
-  int padWidth = (octoPadWidth - gap*2)/4; // 4 pads in a row
-  int padHeight = (octoPadHeight - gap*2)/2; // 2 pads in a column
+  auto octoPadArea = bounds.removeFromLeft(bounds.getWidth() * 3 / 4);
+  
+  auto linePad1 = octoPadArea.removeFromTop(octoPadArea.getHeight() / 2); // row 1 of 4 pads
+  auto linePad2 = octoPadArea;
 
-  pad1Group.setBounds(gap, gap, padWidth, padHeight);
+  auto pad1Area = linePad1.removeFromLeft(linePad1.getWidth() / 4);
+
+  pad1Group.setBounds(pad1Area.reduced(gap));
+
   auto area = pad1Group.getBounds();
   area.removeFromTop(20); // Leave space for the group title
-  auto areaSettings = area.removeFromTop(padHeight/4); // Leave space for the buttons
+  pad1Text.setBounds(area.removeFromTop(30));
+
+  auto areaSettings = area.removeFromTop(area.getHeight()*1/4); // Leave space for the buttons
   pad1LoadButton.setBounds(areaSettings.removeFromLeft(areaSettings.getWidth()/2));
   pad1ClearButton.setBounds(areaSettings);
   pad1PlayButton.setBounds(area);
 
-  pad2Group.setBounds(gap*2 + padWidth, gap, padWidth, padHeight);
-  pad3Group.setBounds(gap*3 + padWidth*2, gap, padWidth, padHeight);
-  pad4Group.setBounds(gap*4 + padWidth*3, gap, padWidth, padHeight);
-  pad5Group.setBounds(gap, gap*2 + padHeight, padWidth, padHeight);
-  pad6Group.setBounds(gap*2 + padWidth, gap*2 + padHeight, padWidth, padHeight);
-  pad7Group.setBounds(gap*3 + padWidth*2, gap*2 + padHeight, padWidth, padHeight);
-  pad8Group.setBounds(gap*4 + padWidth*3, gap*2 + padHeight, padWidth, padHeight);
+  auto pad2Area = linePad1.removeFromLeft(linePad1.getWidth() / 3);
+  pad2Group.setBounds(pad2Area.reduced(gap));
 
-  pluginNameGroup.setBounds(octoPadWidth + 6*gap, gap, padWidth, padHeight/2);
+  auto pad3Area = linePad1.removeFromLeft(linePad1.getWidth() / 2);
+  pad3Group.setBounds(pad3Area.reduced(gap));
+
+  auto pad4Area = linePad1;
+  pad4Group.setBounds(pad4Area.reduced(gap));
+  
+  auto pad5Area = linePad2.removeFromLeft(linePad2.getWidth() / 4);
+  pad5Group.setBounds(pad5Area.reduced(gap));
+
+  auto pad6Area = linePad2.removeFromLeft(linePad2.getWidth() / 3);
+  pad6Group.setBounds(pad6Area.reduced(gap));
+
+  auto pad7Area = linePad2.removeFromLeft(linePad2.getWidth() / 2);
+  pad7Group.setBounds(pad7Area.reduced(gap));
+
+  auto pad8Area = linePad2;
+  pad8Group.setBounds(pad8Area.reduced(gap));
+
+  pluginNameGroup.setBounds(bounds);
 
 }
 

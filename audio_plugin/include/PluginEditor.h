@@ -16,6 +16,7 @@ private:
   juce::GroupComponent pad1Group, pad2Group, pad3Group, pad4Group, pad5Group, pad6Group, pad7Group, pad8Group;
   juce::GroupComponent pluginNameGroup;
   
+  juce::Label pad1Text;
   juce::TextButton pad1LoadButton, pad1ClearButton;
   juce::TextButton pad1PlayButton;
   // juce::Button pad1Button, pad2Button, pad3Button, pad4Button, pad5Button, pad6Button, pad7Button, pad8Button;
