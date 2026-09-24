@@ -169,8 +169,9 @@ add_custom_target(PLUGIN_HOST
   COMMAND ${CMAKE_COMMAND} -E env
     "JUCE_PLUGINHOST_PATH=${CMAKE_CURRENT_SOURCE_DIR}/libs/juce/extras/AudioPluginHost/Builds/VisualStudio2022/x64/Release/App"
     "${CMAKE_CURRENT_SOURCE_DIR}/libs/juce/extras/AudioPluginHost/Builds/VisualStudio2022/x64/Release/App/AudioPluginHost.exe"
-    --no-sandbox
+    "C:/Users/hugdu/OneDrive/Desktop/Octapad.filtergraph" # ça le lance pas par défaut, voir pourquoi
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  VERBATIM
 )
 
 # Adds all the targets configured in the "test" folder.

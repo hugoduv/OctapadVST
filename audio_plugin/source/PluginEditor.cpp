@@ -9,6 +9,15 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   // Here we will add text to the pads later
   pad1Group.setText("Pad 1");
   pad1Group.setTextLabelPosition(juce::Justification::centred);
+  pad1LoadButton.setButtonText("Load");
+  pad1ClearButton.setButtonText("Clear");
+  pad1PlayButton.setButtonText("Play");
+  pad1Group.addChildComponent(pad1LoadButton);
+  pad1Group.addChildComponent(pad1ClearButton);
+  pad1Group.addChildComponent(pad1PlayButton);
+  addAndMakeVisible(pad1LoadButton);
+  addAndMakeVisible(pad1ClearButton);
+  addAndMakeVisible(pad1PlayButton);
   addAndMakeVisible(pad1Group);
 
   pad2Group.setText("Pad 2");
@@ -71,6 +80,13 @@ void PluginEditor::resized() {
   int padHeight = (octoPadHeight - gap*2)/2; // 2 pads in a column
 
   pad1Group.setBounds(gap, gap, padWidth, padHeight);
+  auto area = pad1Group.getBounds();
+  area.removeFromTop(20); // Leave space for the group title
+  auto areaSettings = area.removeFromTop(padHeight/4); // Leave space for the buttons
+  pad1LoadButton.setBounds(areaSettings.removeFromLeft(areaSettings.getWidth()/2));
+  pad1ClearButton.setBounds(areaSettings);
+  pad1PlayButton.setBounds(area);
+
   pad2Group.setBounds(gap*2 + padWidth, gap, padWidth, padHeight);
   pad3Group.setBounds(gap*3 + padWidth*2, gap, padWidth, padHeight);
   pad4Group.setBounds(gap*4 + padWidth*3, gap, padWidth, padHeight);
@@ -79,7 +95,7 @@ void PluginEditor::resized() {
   pad7Group.setBounds(gap*3 + padWidth*2, gap*2 + padHeight, padWidth, padHeight);
   pad8Group.setBounds(gap*4 + padWidth*3, gap*2 + padHeight, padWidth, padHeight);
 
-  pluginNameGroup.setBounds(octoPadWidth + gap, gap, padWidth, padHeight/2);
+  pluginNameGroup.setBounds(octoPadWidth + 6*gap, gap, padWidth, padHeight/2);
 
 }
 
