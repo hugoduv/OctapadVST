@@ -6,7 +6,7 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   // editor's size to whatever you need it to be.
   
   
-  // Here we will add text to the pads later
+  // 8 - pads panel
   pad1Group.setText("Pad 1");
   pad1Group.setTextLabelPosition(juce::Justification::centred);
   pad1LoadButton.setButtonText("Load"); 
@@ -53,6 +53,7 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   pad8Group.setTextLabelPosition(juce::Justification::centred);
   addAndMakeVisible(pad8Group);
 
+  // Preset name panel
   presetNameLabel.setText("Tool - Schism", juce::dontSendNotification);
   presetNameLabel.setJustificationType(juce::Justification::centred);
   presetNameGroup.addChildComponent(presetNameLabel);
@@ -60,6 +61,7 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   addAndMakeVisible(presetNameGroup);
 
 
+  // Preset control panel
   presetLeftButton.setButtonText("<");
   presetRightButton.setButtonText(">");
   presetSelectorGroup.addChildComponent(presetSelector);
@@ -70,6 +72,17 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   addAndMakeVisible(presetRightButton);
   addAndMakeVisible(presetSelectorGroup);
 
+  // Control panel
+
+  masterSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
+  masterSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 80, 20);
+  masterSlider.setTextValueSuffix(" Master");
+  masterSlider.setRange(0.0, 1.0, 0.01);
+  controlGroup.setText("Controls");
+  controlGroup.setTextLabelPosition(juce::Justification::centred);
+  controlGroup.addChildComponent(masterSlider);
+  addAndMakeVisible(masterSlider);
+  addAndMakeVisible(controlGroup);
   pad1LoadButton.onClick = [this]
   {
     DBG("Load button clicked for Pad 1");
@@ -150,6 +163,9 @@ void PluginEditor::resized() {
   presetSelector.setBounds(selectorArea.removeFromTop(selectorArea.getHeight() / 2).reduced(10));
   presetLeftButton.setBounds(selectorArea.removeFromLeft(presetSelectorGroup.getWidth() / 2).reduced(10));
   presetRightButton.setBounds(selectorArea.reduced(10));
+
+  controlGroup.setBounds(panelArea);
+  masterSlider.setBounds(controlGroup.getBounds().reduced(60));
 }
 
 }  // namespace audio_plugin

@@ -23,6 +23,9 @@ private:
   juce::ComboBox presetSelector;
   juce::TextButton presetLeftButton, presetRightButton;
   
+  juce::GroupComponent controlGroup;
+  juce::Slider masterSlider;
+  
   // juce::Button pad1Button, pad2Button, pad3Button, pad4Button, pad5Button, pad6Button, pad7Button, pad8Button;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)
