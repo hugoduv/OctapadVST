@@ -53,8 +53,22 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   pad8Group.setTextLabelPosition(juce::Justification::centred);
   addAndMakeVisible(pad8Group);
 
-  addAndMakeVisible(pluginNameGroup);
+  presetNameLabel.setText("Tool - Schism", juce::dontSendNotification);
+  presetNameLabel.setJustificationType(juce::Justification::centred);
+  presetNameGroup.addChildComponent(presetNameLabel);
+  addAndMakeVisible(presetNameLabel);
+  addAndMakeVisible(presetNameGroup);
 
+
+  presetLeftButton.setButtonText("<");
+  presetRightButton.setButtonText(">");
+  presetSelectorGroup.addChildComponent(presetSelector);
+  presetSelectorGroup.addChildComponent(presetLeftButton);
+  presetSelectorGroup.addChildComponent(presetRightButton);
+  addAndMakeVisible(presetSelector);
+  addAndMakeVisible(presetLeftButton);
+  addAndMakeVisible(presetRightButton);
+  addAndMakeVisible(presetSelectorGroup);
 
   pad1LoadButton.onClick = [this]
   {
@@ -125,8 +139,17 @@ void PluginEditor::resized() {
   auto pad8Area = linePad2;
   pad8Group.setBounds(pad8Area.reduced(gap));
 
-  pluginNameGroup.setBounds(bounds);
+  auto panelArea = bounds.reduced(gap);
+  // Name of the preset
+  presetNameGroup.setBounds(panelArea.removeFromTop(panelArea.getHeight() / 4));
+  presetNameLabel.setBounds(presetNameGroup.getBounds().reduced(10));
 
+
+  presetSelectorGroup.setBounds(panelArea.removeFromTop(panelArea.getHeight() / 3));
+  auto selectorArea = presetSelectorGroup.getBounds().reduced(10);
+  presetSelector.setBounds(selectorArea.removeFromTop(selectorArea.getHeight() / 2).reduced(10));
+  presetLeftButton.setBounds(selectorArea.removeFromLeft(presetSelectorGroup.getWidth() / 2).reduced(10));
+  presetRightButton.setBounds(selectorArea.reduced(10));
 }
 
 }  // namespace audio_plugin
