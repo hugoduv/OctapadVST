@@ -93,7 +93,7 @@ juce_add_plugin(
   COMPANY_NAME
   "hduv" # change this
   IS_SYNTH
-  FALSE # may change this
+  TRUE # may change this
   NEEDS_MIDI_INPUT
   TRUE # may change this
   NEEDS_MIDI_OUTPUT
