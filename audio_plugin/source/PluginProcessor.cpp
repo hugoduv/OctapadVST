@@ -124,6 +124,15 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   // the samples and the outer loop is handling the channels.
   // Alternatively, you can process the samples with the channels
   // interleaved by keeping the same state.
+
+  // Midi messages
+  for (const auto metadata : midiMessages)
+  {
+    const auto message = metadata.getMessage(); // midi message
+
+    DBG("MIDI: Note " << message.getNoteNumber() << " Velocity: " << message.getVelocity() << " Time: " << metadata.samplePosition);
+  }
+
   for (int channel = 0; channel < totalNumInputChannels; ++channel) {
     auto* channelData = buffer.getWritePointer(channel);
     juce::ignoreUnused(channelData);
