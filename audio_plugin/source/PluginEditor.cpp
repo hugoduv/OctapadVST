@@ -83,6 +83,15 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   controlGroup.addChildComponent(masterSlider);
   addAndMakeVisible(masterSlider);
   addAndMakeVisible(controlGroup);
+
+  // Button callbacks
+
+  pad1PlayButton.onClick = [this]
+  {
+    DBG("Playing sound assigned to Pad 1");
+    PlayPad(1);
+  };
+
   pad1LoadButton.onClick = [this]
   {
     DBG("Load button clicked for Pad 1");
@@ -166,6 +175,10 @@ void PluginEditor::resized() {
 
   controlGroup.setBounds(panelArea);
   masterSlider.setBounds(controlGroup.getBounds().reduced(60));
+}
+
+void PluginEditor::PlayPad(int padIndex){
+  DBG("PlayPad called with padIndex: " << padIndex);
 }
 
 }  // namespace audio_plugin

@@ -8,6 +8,8 @@ public:
   void paint(juce::Graphics&) override;
   void resized() override;
 
+  void PlayPad(int padIndex);
+
 private:
   // This reference is provided as a quick way for your editor to
   // access the processor object that created it.
