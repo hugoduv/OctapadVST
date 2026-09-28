@@ -17,6 +17,9 @@ private:
   juce::Label pad1Text;
   juce::TextButton pad1LoadButton, pad1ClearButton;
   juce::TextButton pad1PlayButton;
+  juce::Label pad2Text;
+  juce::TextButton pad2LoadButton, pad2ClearButton;
+  juce::TextButton pad2PlayButton;
 
   juce::GroupComponent presetNameGroup, presetSelectorGroup;
   juce::Label presetNameLabel;

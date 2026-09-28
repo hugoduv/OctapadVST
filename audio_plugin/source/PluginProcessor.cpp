@@ -136,43 +136,46 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
   buffer.clear();
 
-  const auto padIndex = activePad.load();
-  if (padIndex < 0 || padIndex >= 8)
-    return;
-
-  auto& padBuffer = padBuffers[padIndex];
-  const auto position = playbackPosition.load();
-
-  if (position >= padBuffer.getNumSamples())
+  for (int padIndex = 0; padIndex < 8; ++padIndex)
   {
-    activePad.store(-1);
-    return;
+    if (!activePads[padIndex].load())
+      continue;
+
+    auto& padBuffer = padBuffers[padIndex];
+    const auto position = playbackPositions[padIndex].load();
+
+    if (padBuffer.getNumChannels() == 0 ||
+        position >= padBuffer.getNumSamples())
+    {
+      activePads[padIndex].store(false);
+      continue;
+    }
+
+    const auto samplesToCopy = juce::jmin(
+        buffer.getNumSamples(), padBuffer.getNumSamples() - position);
+
+    for (int channel = 0; channel < totalNumOutputChannels; ++channel)
+    {
+      const auto sourceChannel =
+          juce::jmin(channel, padBuffer.getNumChannels() - 1);
+
+      buffer.addFrom(channel,
+                     0,
+                     padBuffer,
+                     sourceChannel,
+                     position,
+                     samplesToCopy);
+    }
+
+    const auto newPosition = position + samplesToCopy;
+
+    if (newPosition >= padBuffer.getNumSamples())
+      activePads[padIndex].store(false);
+    else
+      playbackPositions[padIndex].store(newPosition);
   }
-
-  const auto samplesToCopy = juce::jmin(
-      buffer.getNumSamples(), padBuffer.getNumSamples() - position);
-
-  for (int channel = 0; channel < totalNumOutputChannels; ++channel)
-  {
-    const auto sourceChannel =
-        juce::jmin(channel, padBuffer.getNumChannels() - 1);
-
-    buffer.copyFrom(channel,
-                    0,
-                    padBuffer,
-                    sourceChannel,
-                    position,
-                    samplesToCopy);
-  }
-
-  const auto newPosition = position + samplesToCopy;
-
-  if (newPosition >= padBuffer.getNumSamples())
-    activePad.store(-1);
-  else
-    playbackPosition.store(newPosition);
 }
-
+  
 bool PluginProcessor::hasEditor() const {
   return true;  // (change this to false if you choose to not supply an editor)
 }
@@ -200,10 +203,11 @@ void PluginProcessor::loadPadBuffer(int padIndex) {
   if (padIndex < 0 || padIndex >= 8)
     return;
 
-  auto file = juce::File(testWavFilePath);
+  const auto file = juce::File(padIndex == 0 ? testWavFilePath1
+                                             : testWavFilePath2);
 
   std::unique_ptr<juce::AudioFormatReader> reader(
-      formatManager.createReaderFor(file));
+      formatManager.createReaderFor(file)); // for reading wav)
 
   if (reader == nullptr)
     return;
@@ -211,7 +215,7 @@ void PluginProcessor::loadPadBuffer(int padIndex) {
   const auto numChannels = static_cast<int>(reader->numChannels);
   const auto numSamples = static_cast<int>(reader->lengthInSamples);
 
-  padBuffers[padIndex].setSize(numChannels, numSamples);
+  padBuffers[padIndex].setSize(numChannels, numSamples); // buffer initialization
 
   reader->read(&padBuffers[padIndex],
                0,
@@ -219,6 +223,16 @@ void PluginProcessor::loadPadBuffer(int padIndex) {
                0,
                true,
                true);
+}
+
+void PluginProcessor::clearPadBuffer(int padIndex)
+{
+  if (padIndex < 0 || padIndex >= 8)
+    return;
+
+  padBuffers[padIndex].setSize(0, 0);
+
+  activePads[padIndex].store(false);
 }
 
 void PluginProcessor::triggerPad(int padIndex)
@@ -229,8 +243,8 @@ void PluginProcessor::triggerPad(int padIndex)
     if (padBuffers[padIndex].getNumSamples() == 0)
         loadPadBuffer(padIndex);
 
-    playbackPosition.store(0);
-    activePad.store(padIndex);
+    playbackPositions[padIndex].store(0);
+    activePads[padIndex].store(true);
 }
 
 

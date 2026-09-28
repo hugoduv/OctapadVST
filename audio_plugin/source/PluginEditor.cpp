@@ -27,6 +27,19 @@ PluginEditor::PluginEditor(PluginProcessor& p)
 
   pad2Group.setText("Pad 2");
   pad2Group.setTextLabelPosition(juce::Justification::centred);
+  pad2LoadButton.setButtonText("Load");
+  pad2ClearButton.setButtonText("Clear");
+  pad2PlayButton.setButtonText("Play");
+  pad2Text.setText("test2.wav", juce::dontSendNotification);
+  pad2Text.setJustificationType(juce::Justification::centred);
+  pad2Group.addChildComponent(pad2LoadButton);
+  pad2Group.addChildComponent(pad2ClearButton);
+  pad2Group.addChildComponent(pad2PlayButton);
+  pad2Group.addChildComponent(pad2Text);
+  addAndMakeVisible(pad2LoadButton);
+  addAndMakeVisible(pad2ClearButton);
+  addAndMakeVisible(pad2PlayButton);
+  addAndMakeVisible(pad2Text);
   addAndMakeVisible(pad2Group);
 
   pad3Group.setText("Pad 3");
@@ -95,6 +108,29 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   pad1LoadButton.onClick = [this]
   {
     DBG("Load button clicked for Pad 1");
+    processorRef.loadPadBuffer(0);
+  };
+
+  pad1ClearButton.onClick = [this]
+  {
+    processorRef.clearPadBuffer(0);
+  };
+
+  pad2LoadButton.onClick = [this]
+  {
+    DBG("Load button clicked for Pad 2");
+    processorRef.loadPadBuffer(1);
+  };
+
+  pad2ClearButton.onClick = [this]
+  {
+    processorRef.clearPadBuffer(1);
+  };
+
+  pad2PlayButton.onClick = [this]
+  {
+    DBG("Playing sound assigned to Pad 2");
+    PlayPad(1);
   };
 
   setSize(540*2, 270*2); // dimensions of the Roland Octapad hardware
@@ -142,6 +178,14 @@ void PluginEditor::resized() {
 
   auto pad2Area = linePad1.removeFromLeft(linePad1.getWidth() / 3);
   pad2Group.setBounds(pad2Area.reduced(gap));
+
+  auto pad2GroupArea = pad2Group.getBounds();
+  pad2GroupArea.removeFromTop(20);
+  pad2Text.setBounds(pad2GroupArea.removeFromTop(30));
+  auto pad2Settings = pad2GroupArea.removeFromTop(pad2GroupArea.getHeight() / 4);
+  pad2LoadButton.setBounds(pad2Settings.removeFromLeft(pad2Settings.getWidth() / 2));
+  pad2ClearButton.setBounds(pad2Settings);
+  pad2PlayButton.setBounds(pad2GroupArea);
 
   auto pad3Area = linePad1.removeFromLeft(linePad1.getWidth() / 2);
   pad3Group.setBounds(pad3Area.reduced(gap));
