@@ -89,7 +89,7 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   pad1PlayButton.onClick = [this]
   {
     DBG("Playing sound assigned to Pad 1");
-    PlayPad(1);
+    PlayPad(0); // 0 is index for Pad 1
   };
 
   pad1LoadButton.onClick = [this]
@@ -179,6 +179,7 @@ void PluginEditor::resized() {
 
 void PluginEditor::PlayPad(int padIndex){
   DBG("PlayPad called with padIndex: " << padIndex);
+  processorRef.loadPadBuffer(padIndex); // Adjust for 0-based index in the processor
 }
 
 }  // namespace audio_plugin

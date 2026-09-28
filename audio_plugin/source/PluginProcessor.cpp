@@ -9,6 +9,7 @@ PluginProcessor::PluginProcessor()
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
 #endif
       ) {
+        formatManager.registerBasicFormats(); // Register basic audio formats (WAV, AIFF, MP3, etc.)
 }
 
 const juce::String PluginProcessor::getName() const {
@@ -71,6 +72,12 @@ void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
   // Use this method as the place to do any pre-playback
   // initialisation that you need..
   juce::ignoreUnused(sampleRate, samplesPerBlock);
+
+  for (int i = 0; i < 8; ++i) {
+    padBuffers[i].setSize(2, samplesPerBlock); // stereo output
+    padBuffers[i].clear();
+  }
+
 }
 
 void PluginProcessor::releaseResources() {
@@ -161,6 +168,30 @@ void PluginProcessor::setStateInformation(const void* data, int sizeInBytes) {
   // call.
   juce::ignoreUnused(data, sizeInBytes);
 }
+
+void PluginProcessor::loadPadBuffer(int padIndex) {
+
+  auto file = juce::File(testWavFilePath);
+
+  std::unique_ptr<juce::AudioFormatReader> reader(
+      formatManager.createReaderFor(file));
+
+  if (reader == nullptr)
+    return;
+
+  const auto numChannels = static_cast<int>(reader->numChannels);
+  const auto numSamples = static_cast<int>(reader->lengthInSamples);
+
+  padBuffers[padIndex].setSize(numChannels, numSamples);
+
+  reader->read(&padBuffers[padIndex],
+               0,
+               numSamples,
+               0,
+               true,
+               true);
+}
+
 }  // namespace audio_plugin
 
 // This creates new instances of the plugin.

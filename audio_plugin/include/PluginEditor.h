@@ -11,9 +11,7 @@ public:
   void PlayPad(int padIndex);
 
 private:
-  // This reference is provided as a quick way for your editor to
-  // access the processor object that created it.
-  PluginProcessor& processorRef;
+  PluginProcessor& processorRef; // reference to the associated PluginProcessor
 
   juce::GroupComponent pad1Group, pad2Group, pad3Group, pad4Group, pad5Group, pad6Group, pad7Group, pad8Group;
   juce::Label pad1Text;

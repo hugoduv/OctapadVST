@@ -32,7 +32,14 @@ public:
   void getStateInformation(juce::MemoryBlock& destData) override;
   void setStateInformation(const void* data, int sizeInBytes) override;
 
+  void loadPadBuffer(int padIndex);
+
 private:
+  juce::AudioBuffer<float> padBuffers[8]; // Array to hold audio buffers for each pad
+
+  juce::AudioFormatManager formatManager; // To manage audio formats for loading files
+  juce::String testWavFilePath = "C:\\Users\\hugdu\\Dev\\OctapadVST\\audio_plugin\\test.wav"; // Path to the test WAV file
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
+
 };
 }  // namespace audio_plugin
