@@ -40,7 +40,7 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   }
 
   // Preset name panel
-  presetNameLabel.setText("Tool - Schism", juce::dontSendNotification);
+  presetNameLabel.setText("No Preset Loaded", juce::dontSendNotification);
   presetNameLabel.setJustificationType(juce::Justification::centred);
   presetNameGroup.addChildComponent(presetNameLabel);
   addAndMakeVisible(presetNameLabel);
@@ -56,6 +56,8 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   saveMusicButton.setButtonText("Save Music");
   moveMusicLeftButton.setButtonText("Move <");
   moveMusicRightButton.setButtonText("Move >");
+  renameMusicButton.setButtonText("Rename");
+  musicNameEditor.setTextToShowWhenEmpty("Music name", juce::Colours::grey);
   presetSelectorGroup.addChildComponent(presetSelector);
   presetSelectorGroup.addChildComponent(presetLeftButton);
   presetSelectorGroup.addChildComponent(presetRightButton);
@@ -65,6 +67,8 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   presetSelectorGroup.addChildComponent(saveMusicButton);
   presetSelectorGroup.addChildComponent(moveMusicLeftButton);
   presetSelectorGroup.addChildComponent(moveMusicRightButton);
+  presetSelectorGroup.addChildComponent(musicNameEditor);
+  presetSelectorGroup.addChildComponent(renameMusicButton);
   addAndMakeVisible(presetSelector);
   addAndMakeVisible(presetLeftButton);
   addAndMakeVisible(presetRightButton);
@@ -74,6 +78,8 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   addAndMakeVisible(saveMusicButton);
   addAndMakeVisible(moveMusicLeftButton);
   addAndMakeVisible(moveMusicRightButton);
+  addAndMakeVisible(musicNameEditor);
+  addAndMakeVisible(renameMusicButton);
   addAndMakeVisible(presetSelectorGroup);
 
   // Control panel
@@ -98,6 +104,7 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   saveSetButton.onClick = [this] { saveSetAs(); };
   addMusicButton.onClick = [this] { addMusic(); };
   saveMusicButton.onClick = [this] { saveCurrentMusic(); };
+    renameMusicButton.onClick = [this] { renameMusic(); };
   moveMusicLeftButton.onClick = [this] { moveMusic(-1); };
   moveMusicRightButton.onClick = [this] { moveMusic(1); };
 
@@ -149,16 +156,19 @@ void PluginEditor::resized() {
   
   auto panelArea = bounds.reduced(gap);
   // Name of the preset
-  presetNameGroup.setBounds(panelArea.removeFromTop(panelArea.getHeight() / 4));
+  presetNameGroup.setBounds(panelArea.removeFromTop(panelArea.getHeight() / 8));
   presetNameLabel.setBounds(presetNameGroup.getBounds().reduced(10));
 
 
-  presetSelectorGroup.setBounds(panelArea.removeFromTop(panelArea.getHeight() / 3));
+  presetSelectorGroup.setBounds(panelArea.removeFromTop(panelArea.getHeight() / 2 + 80) );
   auto selectorArea = presetSelectorGroup.getBounds().reduced(10);
   presetSelector.setBounds(selectorArea.removeFromTop(selectorArea.getHeight() / 4));
   auto navigationArea = selectorArea.removeFromTop(selectorArea.getHeight() / 3);
   presetLeftButton.setBounds(navigationArea.removeFromLeft(navigationArea.getWidth() / 2).reduced(3));
   presetRightButton.setBounds(navigationArea.reduced(3));
+  auto nameArea = selectorArea.removeFromTop(selectorArea.getHeight() / 3);
+  musicNameEditor.setBounds(nameArea.removeFromLeft(nameArea.getWidth() * 2 / 3).reduced(3));
+  renameMusicButton.setBounds(nameArea.reduced(3));
   auto setArea = selectorArea.removeFromTop(selectorArea.getHeight() / 2);
   openSetButton.setBounds(setArea.removeFromLeft(setArea.getWidth() / 2).reduced(3));
   saveSetButton.setBounds(setArea.reduced(3));
@@ -271,6 +281,9 @@ void PluginEditor::refreshMusicSelector()
                               ? currentSetDirectory.getFileName()
                               : "No set loaded",
                           juce::dontSendNotification);
+  if (currentMusicIndex >= 0 && currentMusicIndex < musicNames.size())
+    musicNameEditor.setText(musicNames[currentMusicIndex],
+                            juce::dontSendNotification);
 }
 
 void PluginEditor::loadMusic(int musicIndex)
@@ -405,6 +418,33 @@ void PluginEditor::moveMusic(int direction)
   musicNames.set(currentMusicIndex, musicNames[targetIndex]);
   musicNames.set(targetIndex, movedName);
   currentMusicIndex = targetIndex;
+  saveSetMetadata();
+  refreshMusicSelector();
+}
+
+void PluginEditor::renameMusic()
+{
+  if (!currentSetDirectory.isDirectory() ||
+      currentMusicIndex < 0 || currentMusicIndex >= musicNames.size())
+    return;
+
+  const auto newName = musicNameEditor.getText().trim();
+  if (newName.isEmpty() ||
+      newName.containsAnyOf("\\/:*?\"<>|") ||
+      (musicNames.contains(newName) &&
+       newName != musicNames[currentMusicIndex]))
+    return;
+
+  const auto oldName = musicNames[currentMusicIndex];
+  if (newName == oldName)
+    return;
+
+  const auto oldDirectory = currentSetDirectory.getChildFile(oldName);
+  const auto newDirectory = currentSetDirectory.getChildFile(newName);
+  if (newDirectory.exists() || !oldDirectory.moveFileTo(newDirectory))
+    return;
+
+  musicNames.set(currentMusicIndex, newName);
   saveSetMetadata();
   refreshMusicSelector();
 }

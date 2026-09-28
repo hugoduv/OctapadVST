@@ -18,6 +18,7 @@ private:
   void saveSetAs();
   void addMusic();
   void saveCurrentMusic();
+  void renameMusic();
   void loadMusic(int musicIndex);
   void refreshMusicSelector();
   void moveMusic(int direction);
@@ -37,6 +38,8 @@ private:
   juce::TextButton presetLeftButton, presetRightButton;
   juce::TextButton openSetButton, saveSetButton, addMusicButton, saveMusicButton;
   juce::TextButton moveMusicLeftButton, moveMusicRightButton;
+  juce::TextEditor musicNameEditor;
+  juce::TextButton renameMusicButton;
   juce::File currentSetDirectory;
   juce::StringArray musicNames;
   int currentMusicIndex = -1;
