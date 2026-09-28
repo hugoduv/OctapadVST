@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 
 namespace audio_plugin {
 class PluginProcessor : public juce::AudioProcessor {
@@ -34,8 +35,12 @@ public:
 
   void loadPadBuffer(int padIndex);
 
+  void triggerPad(int padIndex);
+
 private:
   juce::AudioBuffer<float> padBuffers[8]; // Array to hold audio buffers for each pad
+  std::atomic<int> activePad{-1}; // currently active pads
+  std::atomic<int> playbackPosition{0};
 
   juce::AudioFormatManager formatManager; // To manage audio formats for loading files
   juce::String testWavFilePath = "C:\\Users\\hugdu\\Dev\\OctapadVST\\audio_plugin\\test.wav"; // Path to the test WAV file

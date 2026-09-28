@@ -179,7 +179,7 @@ void PluginEditor::resized() {
 
 void PluginEditor::PlayPad(int padIndex){
   DBG("PlayPad called with padIndex: " << padIndex);
-  processorRef.loadPadBuffer(padIndex); // Adjust for 0-based index in the processor
+  processorRef.triggerPad(padIndex); // Adjust for 0-based index in the processor
 }
 
 }  // namespace audio_plugin
