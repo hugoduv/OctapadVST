@@ -8,7 +8,7 @@ BEGIN_JUCE_MODULE_DECLARATION
    version:       0.1.0
    name:          Audio Plugin
    description:   Plugin core
-   dependencies:  juce_audio_utils
+   dependencies:  juce_audio_utils, juce_audio_formats
 
    website:       https://thewolfsound.com
    license:       Unlicense
@@ -21,7 +21,10 @@ END_JUCE_MODULE_DECLARATION
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_audio_formats/juce_audio_formats.h>
 #include "include/PluginProcessor.h"
 #include "include/PluginEditor.h"
+
+
 
 // #include all additional header files below

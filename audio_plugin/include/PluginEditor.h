@@ -11,14 +11,15 @@ public:
   void PlayPad(int padIndex);
 
 private:
-  // This reference is provided as a quick way for your editor to
-  // access the processor object that created it.
-  PluginProcessor& processorRef;
+  void choosePadFile(int padIndex);
+  void layoutPad(int padIndex);
 
-  juce::GroupComponent pad1Group, pad2Group, pad3Group, pad4Group, pad5Group, pad6Group, pad7Group, pad8Group;
-  juce::Label pad1Text;
-  juce::TextButton pad1LoadButton, pad1ClearButton;
-  juce::TextButton pad1PlayButton;
+  PluginProcessor& processorRef; // reference to the associated PluginProcessor
+
+  juce::GroupComponent padGroups[8];
+  juce::Label padNames[8];
+  juce::TextButton padLoadButtons[8], padClearButtons[8], padPlayButtons[8];
+  std::unique_ptr<juce::FileChooser> fileChooser;
 
   juce::GroupComponent presetNameGroup, presetSelectorGroup;
   juce::Label presetNameLabel;
