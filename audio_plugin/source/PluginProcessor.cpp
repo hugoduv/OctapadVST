@@ -241,9 +241,18 @@ void PluginProcessor::clearPadBuffer(int padIndex)
     return;
 
   padBuffers[padIndex].setSize(0, 0);
+  defaultPadFiles[padIndex] = {};
 
   activePads[padIndex].store(false);
   playbackPositions[padIndex].store(0);
+}
+
+juce::File PluginProcessor::getPadFile(int padIndex) const
+{
+  if (padIndex < 0 || padIndex >= 8)
+    return {};
+
+  return defaultPadFiles[padIndex];
 }
 
 void PluginProcessor::triggerPad(int padIndex)

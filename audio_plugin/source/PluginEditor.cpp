@@ -50,12 +50,30 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   // Preset control panel
   presetLeftButton.setButtonText("<");
   presetRightButton.setButtonText(">");
+  openSetButton.setButtonText("Open Set");
+  saveSetButton.setButtonText("Save Set");
+  addMusicButton.setButtonText("Add Music");
+  saveMusicButton.setButtonText("Save Music");
+  moveMusicLeftButton.setButtonText("Move <");
+  moveMusicRightButton.setButtonText("Move >");
   presetSelectorGroup.addChildComponent(presetSelector);
   presetSelectorGroup.addChildComponent(presetLeftButton);
   presetSelectorGroup.addChildComponent(presetRightButton);
+  presetSelectorGroup.addChildComponent(openSetButton);
+  presetSelectorGroup.addChildComponent(saveSetButton);
+  presetSelectorGroup.addChildComponent(addMusicButton);
+  presetSelectorGroup.addChildComponent(saveMusicButton);
+  presetSelectorGroup.addChildComponent(moveMusicLeftButton);
+  presetSelectorGroup.addChildComponent(moveMusicRightButton);
   addAndMakeVisible(presetSelector);
   addAndMakeVisible(presetLeftButton);
   addAndMakeVisible(presetRightButton);
+  addAndMakeVisible(openSetButton);
+  addAndMakeVisible(saveSetButton);
+  addAndMakeVisible(addMusicButton);
+  addAndMakeVisible(saveMusicButton);
+  addAndMakeVisible(moveMusicLeftButton);
+  addAndMakeVisible(moveMusicRightButton);
   addAndMakeVisible(presetSelectorGroup);
 
   // Control panel
@@ -69,6 +87,19 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   controlGroup.addChildComponent(masterSlider);
   addAndMakeVisible(masterSlider);
   addAndMakeVisible(controlGroup);
+
+  presetSelector.onChange = [this]
+  {
+    loadMusic(presetSelector.getSelectedItemIndex());
+  };
+  presetLeftButton.onClick = [this] { loadMusic(currentMusicIndex - 1); };
+  presetRightButton.onClick = [this] { loadMusic(currentMusicIndex + 1); };
+  openSetButton.onClick = [this] { chooseSetDirectory(); };
+  saveSetButton.onClick = [this] { saveSetAs(); };
+  addMusicButton.onClick = [this] { addMusic(); };
+  saveMusicButton.onClick = [this] { saveCurrentMusic(); };
+  moveMusicLeftButton.onClick = [this] { moveMusic(-1); };
+  moveMusicRightButton.onClick = [this] { moveMusic(1); };
 
   setSize(540*2, 270*2); // dimensions of the Roland Octapad hardware
 }
@@ -124,9 +155,18 @@ void PluginEditor::resized() {
 
   presetSelectorGroup.setBounds(panelArea.removeFromTop(panelArea.getHeight() / 3));
   auto selectorArea = presetSelectorGroup.getBounds().reduced(10);
-  presetSelector.setBounds(selectorArea.removeFromTop(selectorArea.getHeight() / 2).reduced(10));
-  presetLeftButton.setBounds(selectorArea.removeFromLeft(presetSelectorGroup.getWidth() / 2).reduced(10));
-  presetRightButton.setBounds(selectorArea.reduced(10));
+  presetSelector.setBounds(selectorArea.removeFromTop(selectorArea.getHeight() / 4));
+  auto navigationArea = selectorArea.removeFromTop(selectorArea.getHeight() / 3);
+  presetLeftButton.setBounds(navigationArea.removeFromLeft(navigationArea.getWidth() / 2).reduced(3));
+  presetRightButton.setBounds(navigationArea.reduced(3));
+  auto setArea = selectorArea.removeFromTop(selectorArea.getHeight() / 2);
+  openSetButton.setBounds(setArea.removeFromLeft(setArea.getWidth() / 2).reduced(3));
+  saveSetButton.setBounds(setArea.reduced(3));
+  auto musicArea = selectorArea.removeFromTop(selectorArea.getHeight() / 2);
+  addMusicButton.setBounds(musicArea.removeFromLeft(musicArea.getWidth() / 2).reduced(3));
+  saveMusicButton.setBounds(musicArea.reduced(3));
+  moveMusicLeftButton.setBounds(selectorArea.removeFromLeft(selectorArea.getWidth() / 2).reduced(3));
+  moveMusicRightButton.setBounds(selectorArea.reduced(3));
 
   controlGroup.setBounds(panelArea);
   masterSlider.setBounds(controlGroup.getBounds().reduced(60));
@@ -165,6 +205,208 @@ void PluginEditor::layoutPad(int padIndex)
       settings.removeFromLeft(settings.getWidth() / 2));
   padClearButtons[padIndex].setBounds(settings);
   padPlayButtons[padIndex].setBounds(area);
+}
+
+void PluginEditor::chooseSetDirectory()
+{
+  fileChooser = std::make_unique<juce::FileChooser>(
+      "Choose a set folder", juce::File{}, "");
+
+  fileChooser->launchAsync(
+      juce::FileBrowserComponent::openMode |
+          juce::FileBrowserComponent::canSelectDirectories,
+      [this](const juce::FileChooser& chooser)
+      {
+        const auto directory = chooser.getResult();
+        if (directory.isDirectory())
+          loadSetDirectory(directory);
+      });
+}
+
+void PluginEditor::loadSetDirectory(const juce::File& directory)
+{
+  currentSetDirectory = directory;
+  musicNames.clear();
+
+  const auto metadataFile = directory.getChildFile("set.json");
+  if (metadataFile.existsAsFile())
+  {
+    const auto metadata = juce::JSON::parse(metadataFile.loadFileAsString());
+    if (const auto* object = metadata.getDynamicObject())
+    {
+      if (const auto* names = object->getProperty("musics").getArray())
+      {
+        for (const auto& name : *names)
+          musicNames.add(name.toString());
+      }
+    }
+  }
+
+  if (musicNames.isEmpty())
+  {
+    juce::Array<juce::File> directories;
+    directory.findChildFiles(directories, juce::File::findDirectories,
+                             false);
+    for (const auto& musicDirectory : directories)
+    {
+      if (musicDirectory.getFileName() != "")
+        musicNames.add(musicDirectory.getFileName());
+    }
+  }
+
+  refreshMusicSelector();
+  if (!musicNames.isEmpty())
+    loadMusic(0);
+}
+
+void PluginEditor::refreshMusicSelector()
+{
+  presetSelector.clear(juce::dontSendNotification);
+  for (int index = 0; index < musicNames.size(); ++index)
+    presetSelector.addItem(musicNames[index], index + 1);
+
+  presetSelector.setSelectedItemIndex(currentMusicIndex,
+                                      juce::dontSendNotification);
+  presetNameLabel.setText(currentSetDirectory.isDirectory()
+                              ? currentSetDirectory.getFileName()
+                              : "No set loaded",
+                          juce::dontSendNotification);
+}
+
+void PluginEditor::loadMusic(int musicIndex)
+{
+  if (!currentSetDirectory.isDirectory() ||
+      musicIndex < 0 || musicIndex >= musicNames.size())
+    return;
+
+  currentMusicIndex = musicIndex;
+  const auto musicDirectory =
+      currentSetDirectory.getChildFile(musicNames[currentMusicIndex]);
+
+  for (int padIndex = 0; padIndex < 8; ++padIndex)
+  {
+    processorRef.clearPadBuffer(padIndex);
+    const auto padFile = musicDirectory.getChildFile(
+        "pad" + juce::String(padIndex + 1) + ".wav");
+    if (processorRef.loadPadBuffer(padIndex, padFile))
+      padNames[padIndex].setText(padFile.getFileName(),
+                                 juce::dontSendNotification);
+    else
+      padNames[padIndex].setText("No sample", juce::dontSendNotification);
+  }
+
+  refreshMusicSelector();
+}
+
+bool PluginEditor::saveMusicToDirectory(const juce::File& directory)
+{
+  if (!directory.createDirectory())
+    return false;
+
+  for (int padIndex = 0; padIndex < 8; ++padIndex)
+  {
+    const auto source = processorRef.getPadFile(padIndex);
+    const auto destination = directory.getChildFile(
+        "pad" + juce::String(padIndex + 1) + ".wav");
+
+    if (source.existsAsFile())
+    {
+      if (source.getFullPathName() != destination.getFullPathName() &&
+          !source.copyFileTo(destination))
+        return false;
+    }
+    else if (destination.existsAsFile())
+    {
+      destination.deleteFile();
+    }
+  }
+
+  return true;
+}
+
+void PluginEditor::saveCurrentMusic()
+{
+  if (!currentSetDirectory.isDirectory() ||
+      currentMusicIndex < 0 || currentMusicIndex >= musicNames.size())
+    return;
+
+  saveMusicToDirectory(currentSetDirectory.getChildFile(
+      musicNames[currentMusicIndex]));
+  saveSetMetadata();
+}
+
+void PluginEditor::saveSetMetadata()
+{
+  if (!currentSetDirectory.isDirectory())
+    return;
+
+  juce::Array<juce::var> names;
+  for (const auto& name : musicNames)
+    names.add(name);
+
+  juce::DynamicObject::Ptr object = new juce::DynamicObject();
+  object->setProperty("musics", juce::var(names));
+  currentSetDirectory.getChildFile("set.json").replaceWithText(
+      juce::JSON::toString(juce::var(object), true));
+}
+
+void PluginEditor::saveSetAs()
+{
+  fileChooser = std::make_unique<juce::FileChooser>(
+      "Choose the set folder", juce::File{}, "");
+
+  fileChooser->launchAsync(
+      juce::FileBrowserComponent::openMode |
+          juce::FileBrowserComponent::canSelectDirectories,
+      [this](const juce::FileChooser& chooser)
+      {
+        const auto directory = chooser.getResult();
+        if (!directory.isDirectory())
+          return;
+
+        currentSetDirectory = directory;
+        if (musicNames.isEmpty())
+        {
+          musicNames.add("Music 1");
+          currentMusicIndex = 0;
+        }
+
+        saveCurrentMusic();
+        saveSetMetadata();
+        refreshMusicSelector();
+      });
+}
+
+void PluginEditor::addMusic()
+{
+  if (!currentSetDirectory.isDirectory())
+    return;
+
+  auto uniqueName = "Music " + juce::String(musicNames.size() + 1);
+  int suffix = 2;
+  while (musicNames.contains(uniqueName))
+    uniqueName = "Music " + juce::String(musicNames.size() + 1) +
+                 " " + juce::String(suffix++);
+
+  musicNames.add(uniqueName);
+  currentSetDirectory.getChildFile(uniqueName).createDirectory();
+  saveSetMetadata();
+  refreshMusicSelector();
+  loadMusic(musicNames.size() - 1);
+}
+
+void PluginEditor::moveMusic(int direction)
+{
+  const auto targetIndex = currentMusicIndex + direction;
+  if (targetIndex < 0 || targetIndex >= musicNames.size())
+    return;
+
+  const auto movedName = musicNames[currentMusicIndex];
+  musicNames.set(currentMusicIndex, musicNames[targetIndex]);
+  musicNames.set(targetIndex, movedName);
+  currentMusicIndex = targetIndex;
+  saveSetMetadata();
+  refreshMusicSelector();
 }
 
 }  // namespace audio_plugin

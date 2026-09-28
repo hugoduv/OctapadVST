@@ -13,6 +13,16 @@ public:
 private:
   void choosePadFile(int padIndex);
   void layoutPad(int padIndex);
+  void chooseSetDirectory();
+  void loadSetDirectory(const juce::File& directory);
+  void saveSetAs();
+  void addMusic();
+  void saveCurrentMusic();
+  void loadMusic(int musicIndex);
+  void refreshMusicSelector();
+  void moveMusic(int direction);
+  void saveSetMetadata();
+  bool saveMusicToDirectory(const juce::File& directory);
 
   PluginProcessor& processorRef; // reference to the associated PluginProcessor
 
@@ -25,6 +35,11 @@ private:
   juce::Label presetNameLabel;
   juce::ComboBox presetSelector;
   juce::TextButton presetLeftButton, presetRightButton;
+  juce::TextButton openSetButton, saveSetButton, addMusicButton, saveMusicButton;
+  juce::TextButton moveMusicLeftButton, moveMusicRightButton;
+  juce::File currentSetDirectory;
+  juce::StringArray musicNames;
+  int currentMusicIndex = -1;
   
   juce::GroupComponent controlGroup;
   juce::Slider masterSlider;

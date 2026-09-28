@@ -36,6 +36,7 @@ public:
   void loadPadBuffer(int padIndex);
   bool loadPadBuffer(int padIndex, const juce::File& file);
   void clearPadBuffer(int padIndex);
+  juce::File getPadFile(int padIndex) const;
 
   void triggerPad(int padIndex);
 
