@@ -6,65 +6,38 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   // editor's size to whatever you need it to be.
   
   
-  // 8 - pads panel
-  pad1Group.setText("Pad 1");
-  pad1Group.setTextLabelPosition(juce::Justification::centred);
-  pad1LoadButton.setButtonText("Load"); 
-  pad1ClearButton.setButtonText("Clear");
-  pad1PlayButton.setButtonText("Play");
-  pad1Text.setText("audio.wav", juce::dontSendNotification);
-  pad1Text.setJustificationType(juce::Justification::centred);
+  for (int padIndex = 0; padIndex < 8; ++padIndex)
+  {
+    padGroups[padIndex].setText("Pad " + juce::String(padIndex + 1));
+    padGroups[padIndex].setTextLabelPosition(juce::Justification::centred);
+    padLoadButtons[padIndex].setButtonText("Load");
+    padClearButtons[padIndex].setButtonText("Clear");
+    padPlayButtons[padIndex].setButtonText("Play");
+    padNames[padIndex].setText("No sample", juce::dontSendNotification);
+    padNames[padIndex].setJustificationType(juce::Justification::centred);
 
-  pad1Group.addChildComponent(pad1LoadButton);
-  pad1Group.addChildComponent(pad1ClearButton);
-  pad1Group.addChildComponent(pad1PlayButton);
-  pad1Group.addChildComponent(pad1Text);
-  addAndMakeVisible(pad1LoadButton);
-  addAndMakeVisible(pad1ClearButton);
-  addAndMakeVisible(pad1PlayButton);
-  addAndMakeVisible(pad1Text);
-  addAndMakeVisible(pad1Group);
+    addAndMakeVisible(padGroups[padIndex]);
+    addAndMakeVisible(padLoadButtons[padIndex]);
+    addAndMakeVisible(padClearButtons[padIndex]);
+    addAndMakeVisible(padPlayButtons[padIndex]);
+    addAndMakeVisible(padNames[padIndex]);
 
-  pad2Group.setText("Pad 2");
-  pad2Group.setTextLabelPosition(juce::Justification::centred);
-  pad2LoadButton.setButtonText("Load");
-  pad2ClearButton.setButtonText("Clear");
-  pad2PlayButton.setButtonText("Play");
-  pad2Text.setText("test2.wav", juce::dontSendNotification);
-  pad2Text.setJustificationType(juce::Justification::centred);
-  pad2Group.addChildComponent(pad2LoadButton);
-  pad2Group.addChildComponent(pad2ClearButton);
-  pad2Group.addChildComponent(pad2PlayButton);
-  pad2Group.addChildComponent(pad2Text);
-  addAndMakeVisible(pad2LoadButton);
-  addAndMakeVisible(pad2ClearButton);
-  addAndMakeVisible(pad2PlayButton);
-  addAndMakeVisible(pad2Text);
-  addAndMakeVisible(pad2Group);
+    padLoadButtons[padIndex].onClick = [this, padIndex]
+    {
+      choosePadFile(padIndex);
+    };
 
-  pad3Group.setText("Pad 3");
-  pad3Group.setTextLabelPosition(juce::Justification::centred);
-  addAndMakeVisible(pad3Group);
+    padClearButtons[padIndex].onClick = [this, padIndex]
+    {
+      processorRef.clearPadBuffer(padIndex);
+      padNames[padIndex].setText("No sample", juce::dontSendNotification);
+    };
 
-  pad4Group.setText("Pad 4");
-  pad4Group.setTextLabelPosition(juce::Justification::centred);
-  addAndMakeVisible(pad4Group);
-
-  pad5Group.setText("Pad 5");
-  pad5Group.setTextLabelPosition(juce::Justification::centred);
-  addAndMakeVisible(pad5Group);
-
-  pad6Group.setText("Pad 6");
-  pad6Group.setTextLabelPosition(juce::Justification::centred);
-  addAndMakeVisible(pad6Group);
-
-  pad7Group.setText("Pad 7");
-  pad7Group.setTextLabelPosition(juce::Justification::centred);
-  addAndMakeVisible(pad7Group);
-
-  pad8Group.setText("Pad 8");
-  pad8Group.setTextLabelPosition(juce::Justification::centred);
-  addAndMakeVisible(pad8Group);
+    padPlayButtons[padIndex].onClick = [this, padIndex]
+    {
+      PlayPad(padIndex);
+    };
+  }
 
   // Preset name panel
   presetNameLabel.setText("Tool - Schism", juce::dontSendNotification);
@@ -97,42 +70,6 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   addAndMakeVisible(masterSlider);
   addAndMakeVisible(controlGroup);
 
-  // Button callbacks
-
-  pad1PlayButton.onClick = [this]
-  {
-    DBG("Playing sound assigned to Pad 1");
-    PlayPad(0); // 0 is index for Pad 1
-  };
-
-  pad1LoadButton.onClick = [this]
-  {
-    DBG("Load button clicked for Pad 1");
-    processorRef.loadPadBuffer(0);
-  };
-
-  pad1ClearButton.onClick = [this]
-  {
-    processorRef.clearPadBuffer(0);
-  };
-
-  pad2LoadButton.onClick = [this]
-  {
-    DBG("Load button clicked for Pad 2");
-    processorRef.loadPadBuffer(1);
-  };
-
-  pad2ClearButton.onClick = [this]
-  {
-    processorRef.clearPadBuffer(1);
-  };
-
-  pad2PlayButton.onClick = [this]
-  {
-    DBG("Playing sound assigned to Pad 2");
-    PlayPad(1);
-  };
-
   setSize(540*2, 270*2); // dimensions of the Roland Octapad hardware
 }
 
@@ -160,51 +97,25 @@ void PluginEditor::resized() {
 
   auto octoPadArea = bounds.removeFromLeft(bounds.getWidth() * 3 / 4);
   
-  auto linePad1 = octoPadArea.removeFromTop(octoPadArea.getHeight() / 2); // row 1 of 4 pads
+  auto linePad1 = octoPadArea.removeFromTop(octoPadArea.getHeight() / 2);
   auto linePad2 = octoPadArea;
 
-  auto pad1Area = linePad1.removeFromLeft(linePad1.getWidth() / 4);
+  for (int padIndex = 0; padIndex < 4; ++padIndex)
+  {
+    auto padArea = linePad1.removeFromLeft(
+        linePad1.getWidth() / (4 - padIndex));
+    padGroups[padIndex].setBounds(padArea.reduced(gap));
+    layoutPad(padIndex);
+  }
 
-  pad1Group.setBounds(pad1Area.reduced(gap));
-
-  auto area = pad1Group.getBounds();
-  area.removeFromTop(20); // Leave space for the group title
-  pad1Text.setBounds(area.removeFromTop(30));
-
-  auto areaSettings = area.removeFromTop(area.getHeight()*1/4); // Leave space for the buttons
-  pad1LoadButton.setBounds(areaSettings.removeFromLeft(areaSettings.getWidth()/2));
-  pad1ClearButton.setBounds(areaSettings);
-  pad1PlayButton.setBounds(area);
-
-  auto pad2Area = linePad1.removeFromLeft(linePad1.getWidth() / 3);
-  pad2Group.setBounds(pad2Area.reduced(gap));
-
-  auto pad2GroupArea = pad2Group.getBounds();
-  pad2GroupArea.removeFromTop(20);
-  pad2Text.setBounds(pad2GroupArea.removeFromTop(30));
-  auto pad2Settings = pad2GroupArea.removeFromTop(pad2GroupArea.getHeight() / 4);
-  pad2LoadButton.setBounds(pad2Settings.removeFromLeft(pad2Settings.getWidth() / 2));
-  pad2ClearButton.setBounds(pad2Settings);
-  pad2PlayButton.setBounds(pad2GroupArea);
-
-  auto pad3Area = linePad1.removeFromLeft(linePad1.getWidth() / 2);
-  pad3Group.setBounds(pad3Area.reduced(gap));
-
-  auto pad4Area = linePad1;
-  pad4Group.setBounds(pad4Area.reduced(gap));
+  for (int padIndex = 4; padIndex < 8; ++padIndex)
+  {
+    auto padArea = linePad2.removeFromLeft(
+        linePad2.getWidth() / (8 - padIndex));
+    padGroups[padIndex].setBounds(padArea.reduced(gap));
+    layoutPad(padIndex);
+  }
   
-  auto pad5Area = linePad2.removeFromLeft(linePad2.getWidth() / 4);
-  pad5Group.setBounds(pad5Area.reduced(gap));
-
-  auto pad6Area = linePad2.removeFromLeft(linePad2.getWidth() / 3);
-  pad6Group.setBounds(pad6Area.reduced(gap));
-
-  auto pad7Area = linePad2.removeFromLeft(linePad2.getWidth() / 2);
-  pad7Group.setBounds(pad7Area.reduced(gap));
-
-  auto pad8Area = linePad2;
-  pad8Group.setBounds(pad8Area.reduced(gap));
-
   auto panelArea = bounds.reduced(gap);
   // Name of the preset
   presetNameGroup.setBounds(panelArea.removeFromTop(panelArea.getHeight() / 4));
@@ -224,6 +135,36 @@ void PluginEditor::resized() {
 void PluginEditor::PlayPad(int padIndex){
   DBG("PlayPad called with padIndex: " << padIndex);
   processorRef.triggerPad(padIndex); // Adjust for 0-based index in the processor
+}
+
+void PluginEditor::choosePadFile(int padIndex)
+{
+  fileChooser = std::make_unique<juce::FileChooser>(
+      "Choose a WAV file", juce::File{}, "*.wav");
+
+  fileChooser->launchAsync(
+      juce::FileBrowserComponent::openMode |
+          juce::FileBrowserComponent::canSelectFiles,
+      [this, padIndex](const juce::FileChooser& chooser)
+      {
+        const auto file = chooser.getResult();
+        if (file.existsAsFile() && processorRef.loadPadBuffer(padIndex, file))
+          padNames[padIndex].setText(file.getFileName(),
+                                     juce::dontSendNotification);
+      });
+}
+
+void PluginEditor::layoutPad(int padIndex)
+{
+  auto area = padGroups[padIndex].getBounds();
+  area.removeFromTop(20);
+  padNames[padIndex].setBounds(area.removeFromTop(30));
+
+  auto settings = area.removeFromTop(area.getHeight() / 4);
+  padLoadButtons[padIndex].setBounds(
+      settings.removeFromLeft(settings.getWidth() / 2));
+  padClearButtons[padIndex].setBounds(settings);
+  padPlayButtons[padIndex].setBounds(area);
 }
 
 }  // namespace audio_plugin

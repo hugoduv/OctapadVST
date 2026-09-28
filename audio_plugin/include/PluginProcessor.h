@@ -34,6 +34,7 @@ public:
   void setStateInformation(const void* data, int sizeInBytes) override;
 
   void loadPadBuffer(int padIndex);
+  bool loadPadBuffer(int padIndex, const juce::File& file);
   void clearPadBuffer(int padIndex);
 
   void triggerPad(int padIndex);
@@ -44,8 +45,7 @@ private:
   std::atomic<int> playbackPositions[8]{};
 
   juce::AudioFormatManager formatManager; // To manage audio formats for loading files
-  juce::String testWavFilePath1 = "C:\\Users\\hugdu\\Dev\\OctapadVST\\audio_plugin\\test1.wav"; // Path to the test WAV file
-  juce::String testWavFilePath2 = "C:\\Users\\hugdu\\Dev\\OctapadVST\\audio_plugin\\test2.wav"; // Path to the test WAV file
+  juce::File defaultPadFiles[8];
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 
 };

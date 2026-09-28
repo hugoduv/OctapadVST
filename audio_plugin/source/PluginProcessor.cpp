@@ -10,6 +10,8 @@ PluginProcessor::PluginProcessor()
 #endif
       ) {
         formatManager.registerBasicFormats(); // Register basic audio formats (WAV, AIFF, MP3, etc.)
+        defaultPadFiles[0] = juce::File("C:\\Users\\hugdu\\Dev\\OctapadVST\\audio_plugin\\test1.wav");
+        defaultPadFiles[1] = juce::File("C:\\Users\\hugdu\\Dev\\OctapadVST\\audio_plugin\\test2.wav");
 }
 
 const juce::String PluginProcessor::getName() const {
@@ -203,14 +205,19 @@ void PluginProcessor::loadPadBuffer(int padIndex) {
   if (padIndex < 0 || padIndex >= 8)
     return;
 
-  const auto file = juce::File(padIndex == 0 ? testWavFilePath1
-                                             : testWavFilePath2);
+  loadPadBuffer(padIndex, defaultPadFiles[padIndex]);
+}
+
+bool PluginProcessor::loadPadBuffer(int padIndex, const juce::File& file)
+{
+  if (padIndex < 0 || padIndex >= 8 || !file.existsAsFile())
+    return false;
 
   std::unique_ptr<juce::AudioFormatReader> reader(
       formatManager.createReaderFor(file)); // for reading wav)
 
   if (reader == nullptr)
-    return;
+    return false;
 
   const auto numChannels = static_cast<int>(reader->numChannels);
   const auto numSamples = static_cast<int>(reader->lengthInSamples);
@@ -223,6 +230,9 @@ void PluginProcessor::loadPadBuffer(int padIndex) {
                0,
                true,
                true);
+
+  defaultPadFiles[padIndex] = file;
+  return true;
 }
 
 void PluginProcessor::clearPadBuffer(int padIndex)
@@ -233,6 +243,7 @@ void PluginProcessor::clearPadBuffer(int padIndex)
   padBuffers[padIndex].setSize(0, 0);
 
   activePads[padIndex].store(false);
+  playbackPositions[padIndex].store(0);
 }
 
 void PluginProcessor::triggerPad(int padIndex)
@@ -240,11 +251,12 @@ void PluginProcessor::triggerPad(int padIndex)
   if (padIndex < 0 || padIndex >= 8)
     return;
 
-    if (padBuffers[padIndex].getNumSamples() == 0)
-        loadPadBuffer(padIndex);
+  if (padBuffers[padIndex].getNumChannels() == 0 ||
+      padBuffers[padIndex].getNumSamples() == 0)
+    return;
 
-    playbackPositions[padIndex].store(0);
-    activePads[padIndex].store(true);
+  playbackPositions[padIndex].store(0);
+  activePads[padIndex].store(true);
 }
 
 

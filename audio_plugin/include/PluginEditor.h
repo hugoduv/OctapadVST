@@ -11,15 +11,15 @@ public:
   void PlayPad(int padIndex);
 
 private:
+  void choosePadFile(int padIndex);
+  void layoutPad(int padIndex);
+
   PluginProcessor& processorRef; // reference to the associated PluginProcessor
 
-  juce::GroupComponent pad1Group, pad2Group, pad3Group, pad4Group, pad5Group, pad6Group, pad7Group, pad8Group;
-  juce::Label pad1Text;
-  juce::TextButton pad1LoadButton, pad1ClearButton;
-  juce::TextButton pad1PlayButton;
-  juce::Label pad2Text;
-  juce::TextButton pad2LoadButton, pad2ClearButton;
-  juce::TextButton pad2PlayButton;
+  juce::GroupComponent padGroups[8];
+  juce::Label padNames[8];
+  juce::TextButton padLoadButtons[8], padClearButtons[8], padPlayButtons[8];
+  std::unique_ptr<juce::FileChooser> fileChooser;
 
   juce::GroupComponent presetNameGroup, presetSelectorGroup;
   juce::Label presetNameLabel;
